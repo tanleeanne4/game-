@@ -346,8 +346,8 @@ class BunnyGame {
         this.ctx.ellipse(x + width * 0.6, y, radiusX, radiusY, 0, 0, Math.PI * 2);
         this.ctx.fill();
     }
-        
-        // Draw ground line
+    
+    // Draw ground line
         this.ctx.strokeStyle = '#228B22'; // Forest green
         this.ctx.lineWidth = 3;
         this.ctx.beginPath();
