@@ -32,10 +32,17 @@ class BunnyGame {
         this.obstacleSpawnTimer = 0;
         this.obstacleSpawnInterval = 120;
         
-        // Clouds and flowers for background
+        // Sky elements
+        this.timeOfDay = 0; // 0-1000 representing time of day cycle
+        this.timeDirection = 1; // 1 for day advancing, -1 for night advancing
+        this.timeSpeed = 0.2; // Speed of day/night cycle
+        
+        // Clouds, stars and flowers for background
         this.clouds = [];
+        this.stars = [];
         this.flowers = [];
         this.initClouds();
+        this.initStars();
         this.initFlowers();
         
         this.bindEvents();
@@ -49,7 +56,32 @@ class BunnyGame {
                 y: Math.random() * 100 + 20,
                 width: 60 + Math.random() * 40,
                 height: 30 + Math.random() * 20,
-                speed: 0.5 + Math.random() * 0.5
+                speed: 0.5 + Math.random() * 0.5,
+                opacity: 0.7 + Math.random() * 0.3
+            });
+        }
+    }
+    
+    initStars() {
+        for (let i = 0; i < 30; i++) {
+            this.stars.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * 150,
+                size: 1 + Math.random() * 2,
+                twinkleSpeed: 0.03 + Math.random() * 0.05,
+                twinklePhase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+    
+    initStars() {
+        for (let i = 0; i < 30; i++) {
+            this.stars.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * 150,
+                size: 1 + Math.random() * 2,
+                twinkleSpeed: 0.03 + Math.random() * 0.05,
+                twinklePhase: Math.random() * Math.PI * 2
             });
         }
     }
@@ -106,6 +138,14 @@ class BunnyGame {
     update() {
         if (!this.gameRunning) return;
         
+        // Update time of day
+        this.timeOfDay += this.timeSpeed * this.timeDirection;
+        if (this.timeOfDay > 1000) {
+            this.timeDirection = -1;
+        } else if (this.timeOfDay < 0) {
+            this.timeDirection = 1;
+        }
+        
         // Update bunny physics
         this.bunny.velocityY += this.gravity;
         this.bunny.y += this.bunny.velocityY;
@@ -123,6 +163,14 @@ class BunnyGame {
             if (cloud.x + cloud.width < 0) {
                 cloud.x = this.canvas.width + Math.random() * 200;
                 cloud.y = Math.random() * 100 + 20;
+            }
+        });
+        
+        // Update stars
+        this.stars.forEach(star => {
+            star.twinklePhase += star.twinkleSpeed;
+            if (star.twinklePhase > Math.PI * 2) {
+                star.twinklePhase = 0;
             }
         });
         
@@ -182,10 +230,20 @@ class BunnyGame {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
+        // Draw sky with gradient based on time of day
+        this.drawSky();
+        
+        // Draw stars (visible during night)
+        if (this.timeOfDay > 500) {
+            const starOpacity = Math.min(1, (this.timeOfDay - 500) / 500);
+            this.drawStars(starOpacity);
+        }
+        
         // Draw clouds
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         this.clouds.forEach(cloud => {
-            this.drawCloud(cloud.x, cloud.y, cloud.width, cloud.height);
+            // Clouds are less visible at night
+            const cloudOpacity = cloud.opacity * (1 - Math.max(0, (this.timeOfDay - 500) / 500 * 0.7));
+            this.drawCloud(cloud.x, cloud.y, cloud.width, cloud.height, cloudOpacity);
         });
         
         // Draw ground
@@ -196,6 +254,98 @@ class BunnyGame {
         this.flowers.forEach(flower => {
             this.drawFlower(flower.x, flower.y, flower.size, flower.color);
         });
+        
+        // Draw bunny
+        this.ctx.fillStyle = this.bunny.color;
+        this.ctx.fillRect(this.bunny.x, this.bunny.y, this.bunny.width, this.bunny.height);
+        
+        // Draw obstacles
+        this.obstacles.forEach(obstacle => {
+            this.ctx.fillStyle = obstacle.color;
+            this.ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        });
+        
+        // Draw game over message
+        if (this.gameOver) {
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = '30px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('Game Over', this.canvas.width / 2, this.canvas.height / 2);
+        }
+    }
+    
+    drawSky() {
+        // Create gradient based on time of day
+        const gradient = this.ctx.createLinearGradient(0, 0, 0, this.groundY);
+        
+        if (this.timeOfDay < 250) { // Dawn
+            const t = this.timeOfDay / 250;
+            gradient.addColorStop(0, this.lerpColor('#0C1445', '#E0B0FF', t));
+            gradient.addColorStop(1, this.lerpColor('#1D2951', '#FFC0CB', t));
+        } else if (this.timeOfDay < 500) { // Day
+            gradient.addColorStop(0, '#87CEEB'); // Sky blue
+            gradient.addColorStop(1, '#E0FFFF'); // Light cyan
+        } else if (this.timeOfDay < 750) { // Dusk
+            const t = (this.timeOfDay - 500) / 250;
+            gradient.addColorStop(0, this.lerpColor('#87CEEB', '#E0B0FF', t));
+            gradient.addColorStop(1, this.lerpColor('#E0FFFF', '#FFC0CB', t));
+        } else { // Night
+            gradient.addColorStop(0, '#0C1445'); // Dark blue
+            gradient.addColorStop(1, '#1D2951'); // Navy blue
+        }
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.groundY);
+    }
+    
+    lerpColor(a, b, t) {
+        // Convert hex to rgb
+        const ah = parseInt(a.replace(/#/g, ''), 16);
+        const ar = ah >> 16;
+        const ag = ah >> 8 & 0xff;
+        const ab = ah & 0xff;
+        
+        const bh = parseInt(b.replace(/#/g, ''), 16);
+        const br = bh >> 16;
+        const bg = bh >> 8 & 0xff;
+        const bb = bh & 0xff;
+        
+        // Interpolate
+        const rr = ar + t * (br - ar);
+        const rg = ag + t * (bg - ag);
+        const rb = ab + t * (bb - ab);
+        
+        return `#${((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1)}`;
+    }
+    
+    drawStars(opacity) {
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+        this.stars.forEach(star => {
+            // Make stars twinkle
+            const twinkle = 0.5 + Math.sin(star.twinklePhase) * 0.5;
+            const size = star.size * twinkle;
+            
+            this.ctx.beginPath();
+            this.ctx.arc(star.x, star.y, size, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
+    }
+    
+    drawCloud(x, y, width, height, opacity) {
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+        
+        // Draw a fluffy cloud using multiple circles
+        const radiusX = width / 4;
+        const radiusY = height / 2;
+        
+        this.ctx.beginPath();
+        this.ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+        this.ctx.ellipse(x + width * 0.3, y - height * 0.1, radiusX, radiusY, 0, 0, Math.PI * 2);
+        this.ctx.ellipse(x + width * 0.6, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+        this.ctx.fill();
+    }
         
         // Draw ground line
         this.ctx.strokeStyle = '#228B22'; // Forest green
