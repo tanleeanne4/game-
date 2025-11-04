@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Comic Sans MS', cursive, sans-serif;
-    background: linear-gradient(to bottom, #FFB6C1, #FFC0CB);
+    background: linear-gradient(to bottom, #E3F2FD, #E0F7FA);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -18,8 +18,8 @@ body {
     background: white;
     padding: 20px;
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(255, 105, 180, 0.3);
-    border: 5px solid #FF69B4;
+    box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+    border: 5px solid #4CAF50;
 }
 
 .game-header {
@@ -31,18 +31,18 @@ body {
 }
 
 .game-header h1 {
-    color: #FF69B4;
+    color: #4CAF50;
     font-size: 24px;
 }
 
 .score {
     font-size: 20px;
     font-weight: bold;
-    color: #FF69B4;
+    color: #4CAF50;
 }
 
 #gameCanvas {
-    border: 3px solid #FF69B4;
+    border: 3px solid #4CAF50;
     border-radius: 15px;
     background: linear-gradient(to bottom, #E0FFFF, #F0FFFF);
     display: block;
@@ -54,13 +54,13 @@ body {
 }
 
 .game-controls p {
-    color: #FF69B4;
+    color: #4CAF50;
     margin-bottom: 10px;
     font-size: 14px;
 }
 
 #restartBtn {
-    background: #FF69B4;
+    background: #4CAF50;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -71,7 +71,7 @@ body {
 }
 
 #restartBtn:hover {
-    background: #FF1493;
+    background: #2E7D32;
 }
 
 .game-over {
@@ -89,5 +89,5 @@ body {
 
 .game-over h2 {
     margin-bottom: 10px;
-    color: #FF69B4;
+    color: #4CAF50;
 }
